@@ -1,38 +1,119 @@
-import { test, expect } from '@playwright/test';
+import {test, expect, type Page, type Locator} from '@playwright/test';
+
+interface Elements {
+  locator: (page: Page) => Locator;
+  name: string;
+  text?: string;
+  attribute?: {
+    type: string;
+    value: string;
+
+  }
+}
+const elements: Elements[] = [
+  {
+    locator: (page: Page): Locator => page.locator('h1'),
+    name: 'Header',
+    text: 'Playwright enables reliable end-to-end testing for modern web apps.',
+  },
+  {
+    locator: (page: Page): Locator => page.getByRole('link', { name: 'Playwright logo Playwright' }),
+    name: 'Playwright logo Playwright',
+    text: 'Playwright',
+    attribute: {
+      type: 'href',
+      value: '/'
+    },
+  },
+  {
+    locator: (page: Page): Locator => page.getByRole('link', { name: 'Docs' }),
+    name: 'Docs link',
+    text: 'Docs',
+    attribute: {
+      type: 'href',
+      value: '/docs/intro'
+    },
+  },
+  {
+    locator: (page: Page): Locator => page.getByRole('link', { name: 'API' }),
+    name: 'API link',
+    text: 'API',
+    attribute: {
+      type: 'href',
+      value: '/docs/api/class-playwright'
+    }
+  },
+  {
+    locator: (page: Page): Locator => page.getByRole('button', { name: 'Node.js' }),
+    name: 'Node.js button',
+    text: 'Node.js',
+    attribute: {
+      type: 'href',
+      value: '#'
+    }
+  },
+  {
+    locator: (page: Page): Locator => page.getByRole('link', { name: 'Community' }),
+    name: 'Community link',
+    text: 'Community',
+    attribute: {
+      type: 'href',
+      value: '/community/welcome'
+    }
+  },
+  {
+    locator: (page: Page): Locator => page.getByRole('link', { name: 'Get started' }),
+    name: 'Get started link',
+    text: 'Get started',
+    attribute: {
+      type: 'href',
+      value: '/docs/intro'
+    }
+  },
+  {
+    locator: (page: Page): Locator => page.getByLabel('GitHub repository'),
+    name: 'GitHub icon',
+  },
+  {
+    locator: (page: Page): Locator => page.getByLabel('Discord server'),
+    name: 'Discord icon',
+  },
+  {
+    locator: (page: Page): Locator => page.getByLabel('Switch between dark and light'),
+    name: 'Light mode icon',
+  },
+];
 
 test.describe("Проверки для главной страницы Playwright", async () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('https://playwright.dev/');
   });
-
   test('Проверка отображения элементов навигации хэдера', async ({ page }) => {
-    await expect.soft(page.getByRole('link', { name: 'Playwright logo Playwright' })).toBeVisible();
-    await expect.soft(page.getByRole('link', { name: 'Docs' })).toBeVisible();
-    await expect.soft(page.getByRole('link', { name: 'API' })).toBeVisible();
-    await expect.soft(page.getByRole('button', { name: 'Node.js' })).toBeVisible();
-    await expect.soft(page.getByRole('link', { name: 'Community' })).toBeVisible();
-    await expect.soft(page.getByRole('link', { name: 'GitHub repository' })).toBeVisible();
-    await expect.soft(page.getByRole('link', { name: 'Discord server' })).toBeVisible();
-    await expect.soft(page.getByRole('button', { name: 'Switch between dark and light' })).toBeVisible();
+      for (const {locator, name} of elements) {
+        await test.step(`Проверка отображения элемента ${name} видимым`, async () => {
+          await expect.soft(locator(page)).toBeVisible()
+        });
+      }
   });
 
   test('Проверка названий элементов навигации хэдера', async ({ page }) => {
-    await expect.soft(page.getByRole('link', { name: 'Playwright logo Playwright' })).toContainText('Playwright');
-    await expect.soft(page.getByRole('link', { name: 'Docs' })).toContainText('Docs');
-    await expect.soft(page.getByRole('link', { name: 'API' })).toContainText('API');
-    await expect.soft(page.getByRole('link', { name: 'Community' })).toContainText('Community');
-  });
-
-  test("Проверка заголовка страницы", async ({ page }) => {
-    await expect.soft(page.locator('h1')).toBeVisible();
-    await expect.soft(page.locator('h1')).toContainText('Playwright enables reliable end-to-end testing for modern web apps.');
+    for (const {locator, name, text} of elements) {
+      if (text) {
+        await test.step(`Проверка наименований ${text} элементов ${name}`, async () => {
+          await expect.soft(locator(page)).toContainText(text);
+        });
+      }
+    }
   });
 
   test("Проверка атрибутов элементов навигации хэдера", async ({ page }) => {
-    await expect.soft(page.getByRole('link', { name: 'Docs' })).toHaveAttribute('href', '/docs/intro');
-    await expect.soft(page.getByRole('link', { name: 'API' })).toHaveAttribute('href', '/docs/api/class-playwright');
-    await expect.soft(page.getByRole('button', { name: 'Node.js' })).toHaveAttribute('href', '#');
-    await expect.soft(page.getByRole('link', { name: 'Community' })).toHaveAttribute('href', '/community/welcome');
+    for (const {locator, name, attribute} of elements) {
+      if (attribute) {
+        await test.step(`Проверка атрибутов href элементов ${name}`, async () => {
+          await expect.soft(locator(page)).toHaveAttribute(attribute?.type, attribute?.value);
+        });
+      }
+    }
   });
 
   test("Проверка переключения лайт мода", async ({ page }) => {
@@ -45,11 +126,7 @@ test.describe("Проверки для главной страницы Playwrigh
     await expect.soft(page.getByRole('button', { name: 'Switch between dark and light' })).toHaveAttribute('title', 'dark mode');
   });
 
-  test("Проверка кнопки 'Get Started'", async ({ page }) => {
-    await expect.soft(page.getByRole('link', { name: 'Get started' })).toBeVisible()
-    await expect.soft(page.getByRole('link', { name: 'Get started' })).toContainText('Get started');
-    await expect.soft(page.getByRole('link', { name: 'Get started' })).toHaveAttribute('href', '/docs/intro');
-
+  test("Проверка редиректа на страницу playwright.dev/docs/intro по клику на кнопку  Get started", async ({ page }) => {
     await page.getByRole('link', { name: 'Get started' }).click();
     await expect.soft(page).toHaveURL('https://playwright.dev/docs/intro')
   });
